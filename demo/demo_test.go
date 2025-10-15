@@ -128,6 +128,10 @@ func Test_Hello(*testing.T) {
 	// This is a prerequisite for interacting with the checkpoint data,
 	// because the library APIs for it are designed not to allow accessing unverified data.
 	//
+	// (Arguably, for merely computing the MIP, there should be no need to verify any of the witness signatures or our trust in those.
+	// However, these libraries have been designed to be "hard to misuse", so we do not have the option to elide that work.)
+	// ((Okay, technically the capability is there, just removed from the obvious path... but let's leave it that way :)))
+	//
 	// Here, we use only the log's own pubkey... but ideally we could also use a variety of witness's public keys.
 	verifier, err := note.NewVerifier(dummyPublicKey)
 	if err != nil {
@@ -180,6 +184,35 @@ func Test_Hello(*testing.T) {
 		"proof", proof,
 	)
 
+	// Now let's verify that proof!
+
+	// First, calculate the record hash of the entry we're verifying.
+	//
+	// This is something that both Tessera performed somewhere internally during its appends,
+	// and also that tlog.ProveRecord implicitly must have done (or read tessera's computation of) internally during its calculations,
+	// but neither of those APIs publicly exposes that, so this is the first time in this demo we see this particular constructor.
+	//
+	// Note that a record hash isn't just a fancy name for the bare hash of the content --
+	// it also contains a magic prefix which marks it as a leaf node in the merkle tree,
+	// as per https://tools.ietf.org/html/rfc6962#section-2.1.
+	recordHash := tlog.RecordHash(entries[targetIndex])
+
+	// Verify the proof, again using the tlog library to do the heavy lifting.
+	// Note that the parameters, beyond the proof itself and the record hash and index, all come from the checkpoint data.
+	// There are no further references to any other data from any other part of the tlog!
+	slog.Info("Verifying proof...")
+	err = tlog.CheckRecord(proof, int64(checkpoint.N), checkpoint.Hash, int64(targetIndex), recordHash)
+	if err != nil {
+		slog.Error("Proof verification failed", "error", err)
+		return
+	}
+	slog.Info("Proof verified!")
+
+	// Remember, all the signatures from all the log witnesses were already verified when we loaded the checkpoint,
+	// so now that the MIP is verified, all that trust now applies through transitively all the way to the record.
+	// We're done!
+
+	slog.Info("🎉")
 }
 
 // Produce a human-readable but "random" (deterministic, seeded) string to use as a test entry.
