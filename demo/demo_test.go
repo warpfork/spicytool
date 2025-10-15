@@ -12,7 +12,9 @@ import (
 	"filippo.io/torchwood"
 	"github.com/transparency-dev/tessera"
 	"github.com/transparency-dev/tessera/storage/posix"
+	"github.com/warpfork/spicytool/glue"
 	"golang.org/x/mod/sumdb/note"
+	"golang.org/x/mod/sumdb/tlog"
 )
 
 const (
@@ -23,8 +25,17 @@ const (
 const (
 	logPath            = "/tmp/tlog"
 	checkpointInterval = 100 * time.Millisecond
-	entryCount         = 270 // Must be above 256 if you want to see at least one full tile!
-	targetIndex        = 260
+
+	// Altering this should have near zero effect on outcome...
+	// but does change where checkpoints occur, so,
+	// while it doesn't change the eventual tree structure,
+	// it *will* often change the MIPs produced, since those depend on which tree sizes have checkpoints.
+	batchSize = 10
+
+	// entryCount         = 270 // Must be above 256 if you want to see at least one full tile!
+	// targetIndex        = 260
+	entryCount  = 100270 // I'm picking increasingly large numbers here to insure we see access of more than one tile.
+	targetIndex = 100252
 )
 
 func Test_Hello(*testing.T) {
@@ -56,7 +67,7 @@ func Test_Hello(*testing.T) {
 		tessera.NewAppendOptions().
 			WithCheckpointSigner(signer).
 			WithCheckpointInterval(checkpointInterval).
-			WithBatching(10, time.Second))
+			WithBatching(batchSize, time.Second))
 	if err != nil {
 		slog.Error("Failed to initialize tessera", "error", err)
 		return
@@ -144,7 +155,29 @@ func Test_Hello(*testing.T) {
 
 	// Okay, now on to the interesting bits: making and verifying proofs of tree inclusion.
 
-	// TODO: ...
+	// Compute the MIP!  The tlog library does the heavy lifting here very nicely,
+	// but it needs some interesting glue code to get it to read over the tessera API.
+	//
+	// Note that the MIP itself does *not* include a couple of things that you might suspect it to
+	// (since you'll certainly need them when verifying it):
+	//   - the MIP does *not* include the tree root hash itself.
+	//     (But you'll see it in the checkpoint part of a serialized spicy sig.)
+	//   - the MIP does *not* include the entry hash itself.
+	//     (You *won't* see this in a serialized spicy sig, either!
+	//     You're expected to compute that from the thing you're verifying the sig's application to!)
+	//   - the MIP does *not* include the tree height nor entry index ints.
+	//     (You'll see both in a serialized spicy sig; the former in the checkpoint section, the latter at the top.)
+	hashReader := torchwood.TileHashReaderWithContext(ctx, checkpoint.Tree, glue.NewTesseraTileReader(tlogReader))
+	proof, err := tlog.ProveRecord(int64(checkpoint.N), int64(targetIndex), hashReader)
+	if err != nil {
+		slog.Error("Failed to generate proof", "error", err)
+		return
+	}
+	slog.Info("Computed Merkle Inclusion Proof!",
+		"proof length", len(proof),
+		"proof", proof,
+	)
+
 }
 
 // Produce a human-readable but "random" (deterministic, seeded) string to use as a test entry.
