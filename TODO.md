@@ -6,6 +6,8 @@ todo
 - [ ] the readme should link heavily to c2sp docs instead of redeclaring things here.
 	- ...  but some of those must also first be written ;)
 - [ ] code for parsing spicysig format should probably be hoisted to an upstream (torchwood?).
+- [ ] coherentize logging and output.
+	- stdlib slog looks like it is now a good meeting point.  however, some of the libraries we consume already have other behaviors and will need to be brought into line.
 
 
 longer road
