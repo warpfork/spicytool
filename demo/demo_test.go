@@ -30,7 +30,9 @@ const (
 	// but does change where checkpoints occur, so,
 	// while it doesn't change the eventual tree structure,
 	// it *will* often change the MIPs produced, since those depend on which tree sizes have checkpoints.
-	batchSize = 10
+	// Smaller numbers also noticeably increase the amount of disk usage you'll see from this demo,
+	// since tessera creates but does not (afaik) garbage collect any of the partial tiles.
+	batchSize = 100
 
 	// entryCount         = 270 // Must be above 256 if you want to see at least one full tile!
 	// targetIndex        = 260
