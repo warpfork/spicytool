@@ -123,6 +123,7 @@ func Test_Hello(*testing.T) {
 		slog.Error("Failed to read checkpoint", "error", err)
 		return
 	}
+	slog.Info("checkpoint", "entire", checkpointRaw)
 
 	// Create a verifier for the checkpoint.
 	// This is a prerequisite for interacting with the checkpoint data,

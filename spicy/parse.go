@@ -1,22 +1,38 @@
 package spicy
 
 import (
+	"bytes"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"strconv"
+
 	"golang.org/x/mod/sumdb/note"
 	"golang.org/x/mod/sumdb/tlog"
 )
 
-const preambleV1 = "c2sp.org/spicy-signature@v1\n"
+const (
+	preambleV1 = "c2sp.org/spicy-signature@v1\n"
+	sectionSep = "\n\n"
+)
 
 type SpicySigV1 struct {
-	index uint64
-	mip   tlog.RecordProof
+	entryIndex int64
+	mip        tlog.RecordProof
 
 	checkpointNote note.Note
 
 	contextHint string
 }
 
-func ParseSpicySig(raw []byte) (*SpicySigV1, error) {
+func (s *SpicySigV1) Format() []byte {
+	// ... it has just come to my attention that `note.Note` also cannot be created except by emitting one and parsing it again,
+	// so, that's neat.
+	// What, exactly, is supposed to be a sane type to use to compose in our SpicySig struct here?
+	panic("nyi")
+}
+
+func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	// A spicysig comes in roughly three or four sections:
 	//   1. the header + index + mip.
 	//   2. the tree checkpoint.
@@ -65,5 +81,94 @@ func ParseSpicySig(raw []byte) (*SpicySigV1, error) {
 	// Composing a series of formats that lack distinctive opening and closing delimiters gets confusing, mkay?
 	//
 	// But here we are.  Allons-y!
-	panic("nyi")
+
+	// Check familiar prefix first; "this aint the right file" is the easiest thing to say.
+	if !bytes.HasPrefix(raw, []byte(preambleV1)) {
+		return nil, errors.New("not a spicysig -- preamble does not match")
+	}
+
+	// Split whole document into sections.
+	// This is implemented by gathering indexes rather than doing a split, because
+	// parts 2 and 3 will be handled together, and it makes little sense to split and then re-join them.
+	part2edge := bytes.Index(raw, []byte(sectionSep))
+	if part2edge < 0 {
+		return nil, errors.New("malformed spicysig -- not enough sections")
+	}
+	part3edge := bytes.Index(raw[part2edge+2:], []byte(sectionSep))
+	if part3edge < 0 {
+		return nil, errors.New("malformed spicysig -- not enough sections")
+	}
+	part3edge += part2edge + 2
+	part4edge := bytes.Index(raw[part3edge+2:], []byte(sectionSep))
+	if part4edge > 0 {
+		part4edge += part3edge + 2
+	}
+
+	// fmt.Printf("part 1 >>>\n%q\n<<<\n", raw[0:part2edge])
+	// fmt.Printf("part 2 >>>\n%q\n<<<\n", raw[part2edge+2:part3edge])
+	// fmt.Printf("part 3+ >>>\n%q\n<<<\n", raw[part3edge+2:])
+
+	// Part 1: header and index and MIP.
+	// (We've already checked the header line, so can skip over that.)
+	lines := bytes.Split(raw[0:part2edge], []byte{'\n'})
+	if len(lines) < 3 {
+		return nil, errors.New("malformed spicysig -- too short")
+	}
+	rest, matches := munchPrefix(lines[1], []byte("index "))
+	if !matches {
+		return nil, errors.New("malformed spicysig -- expected index")
+	}
+	entryIndex, err := strconv.ParseInt(string(rest), 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("malformed spicysig -- index must parse as int: %w", err)
+	}
+	mip := tlog.RecordProof{}
+	for i := 2; i < len(lines); i++ {
+		h := [tlog.HashSize]byte{}
+		n, err := base64.StdEncoding.Decode(h[:], lines[i])
+		if err != nil || n != tlog.HashSize {
+			return nil, errors.New("malformed spicysig -- MIP entries must be b64")
+		}
+		mip = append(mip, tlog.Hash(h))
+	}
+
+	// Part 2 + 3:
+	part23 := raw[part2edge+2:]
+	if part4edge > 0 {
+		// An interesting +1 appears here because note.Open demands a trailing linebreak.
+		part23 = raw[part2edge+2 : part4edge+1]
+	}
+	// fmt.Printf("part 23 >>>\n%q\n<<<\n", part23)
+	checkpointNote, err := note.Open(part23, verifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	// Part 4:
+	// A contexthint is optional.  But is the only remaining possible section we accept.
+	contextHint := ""
+	if part4edge > 0 {
+		rest, matches = munchPrefix(raw[part4edge+2:], []byte("contexthint\n"))
+		if !matches {
+			return nil, errors.New("malformed spicysig -- expected contexthint as last section")
+		}
+		contextHint = string(rest)
+	}
+
+	return &SpicySigV1{
+		entryIndex:     entryIndex,
+		mip:            mip,
+		checkpointNote: *checkpointNote,
+		contextHint:    contextHint,
+	}, nil
+}
+
+func munchPrefix(input []byte, expect []byte) (rest []byte, matches bool) {
+	if len(input) < len(expect) {
+		return input, false
+	}
+	if !bytes.Equal(input[0:len(expect)], expect) {
+		return input, false
+	}
+	return input[len(expect):], true
 }
