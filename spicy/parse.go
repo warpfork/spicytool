@@ -38,18 +38,32 @@ func ParseSpicySig(raw []byte) (*SpicySigV1, error) {
 	// The parse of each these sections is delimited by "two consecutive unix linebreaks".
 	// (Including that one of those delimiters occurs between parts 2 and 3,
 	// and that part must be handed to the parser that consumes parts 2 and 3 together.)
-	// ('\r' is not tolerated by any of the other library code I've seen so far, and is thus not tolerated here either.)
+	// ('\r' is not tolerated by any of the other library code I've seen so far,
+	// and the spec is also explicit about using exactly U+000A,
+	// thus we are similarly strict here.)
 	//
-	// (Looking yet deeper, to verify that that delimiter is actually true and cannot be present in a valid body:
-	// It's touchy.
-	// Technically, part 2 is specified as allowing unknown trailing content,
-	// and in fact some implementations *do* permit the double-linebreak value in that section!
-	// (The `torchwood` module's `ParseCheckpoint` rejects it; but `sumdb/tlog`'s `ParseTree` allows it.)
-	// However, the parser for part 3 -- `sumdb/note.Open` -- both skips over arbitrary body to find the last double-linebreak...
-	// but then *also* scans backwards over the body to ensure it doesn't contain another instance of that.
-	// Thus, the parse for part 3 does forbid a variable number of double linebreaks,
-	// leaving the permissiveness of some part 2 implementations as irrelevant.
+	// ... Sort of.
+	// In fact, whether this is unambiguously parsable at all somewhat depends on who you ask.
+	// There is variation amongst implementations of parsers for part 2.
+	//   - `sumdb/note.Open` defines the signature section as the *last* occurence of "\n\n",
+	//     which means that part 3's parse does not forbid that sequence in the section occupied by part 2;
+	//   - `sumdb/tlog.ParseTree` very explicitly ignores *all* trailing content, regardless of content,
+	//     so by that interpretation then one can indeed still have more double linebreaks in part 2;
+	//   - but `torchwood.ParseCheckpoint` *does* reject a checkpoint as malformed if it contains double linebreaks in the trailer.
+	// In specs?
+	//   - https://c2sp.org/tlog-checkpoint declares that all lines in the extension section must be non-empty.
+	//     So, that's on the same page as torchwood's implementation.
+	//   - https://c2sp.org/signed-note does explicitly discuss double-linebreak (aka empty lines) as permissable in the note body.
+	//     So, everyone is in concordance with what `sumdb/note.Open` does (which is a relief).
+	//
+	// We're going with the torchwood interpretation and the spec, here, for the checkpoint body;
+	// if we tolerated a less strict interpretation, the result is simply unworkable
+	// unless we also change the spicysig format to use one of: opening and closing delimiters for sections, or length prefixes, or some other more serious grammar.
+	// But, it does mean we're relying on the constraints on part 2 to be able to
+	// select the byte range that has to be handed to the parser for part 3, which is a bit exotic.
 	// Got a headache yet?  I know I do.
-	// Composing a series of formats that lack distinctive opening and closing delimiters gets confusing, mkay?)
+	// Composing a series of formats that lack distinctive opening and closing delimiters gets confusing, mkay?
+	//
+	// But here we are.  Allons-y!
 	panic("nyi")
 }
