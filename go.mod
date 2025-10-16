@@ -4,6 +4,7 @@ go 1.25
 
 require (
 	filippo.io/torchwood v0.5.1-0.20250930130350-15c8e8b7946e
+	github.com/go-quicktest/qt v1.101.0
 	github.com/transparency-dev/tessera v1.0.0
 	golang.org/x/mod v0.29.0
 )
@@ -12,7 +13,11 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/transparency-dev/formats v0.0.0-20250421220931-bb8ad4d07c26 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
