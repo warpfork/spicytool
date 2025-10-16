@@ -28,29 +28,28 @@ func ParseSpicySig(raw []byte) (*SpicySigV1, error) {
 	// Our parse of all this is necessarily a little gnarly, because
 	// the parser for parts 2+3 just takes what it is given, and does not attempt to
 	// determine where the end of the content it handles is, nor report that...
-	// and so we must have some knowledge of that format here, purely so that we can scan over it,
+	// in fact, the parser for part 3 assumes that the slice it is given is completely its own content,
+	// and bases some of its parse decisions by going backwards from the end of the range.
+	// So, we must have some knowledge of that format here, purely so that we can scan over it,
 	// decide where it ends, and hand that subset off to the relevant parser for that section.
-	//
-	// (Looking yet deeper: technically part 2 is specified as allowing unknown trailing content,
-	// but part 3 explicitly forbids any trailers: the signatures must come last.
-	// Since the spicysig-v1 format places the contexthint section *after* the checkpoint+signatures,
-	// that means yes, we still have to figure out how to leap over both those elements.
-	// Composing a series of formats that lack opening and closing delimiters gets confusing, mkay?)
 	//
 	// Fortunately, although we must "see through" several layers of spec here,
 	// they have a simple enough delimiter:
 	// The parse of each these sections is delimited by "two consecutive unix linebreaks".
+	// (Including that one of those delimiters occurs between parts 2 and 3,
+	// and that part must be handed to the parser that consumes parts 2 and 3 together.)
 	// ('\r' is not tolerated by any of the other library code I've seen so far, and is thus not tolerated here either.)
 	//
-	// (Can the unspecified forward-compatability trailer section of part 2 include double linebreaks,
-	// thus making a fool of all of this?  *Yes*, although it depends on who you ask:
-	//   - `sumdb/note.Open` defines the signature section as the *last* occurence of "\n\n",
-	//     which means that part 3's parse does not forbid that sequence in the section occupied by part 2;
-	//   - `sumdb/tlog.ParseTree` very explicitly ignores *all* trailing content, regardless of content,
-	//     so by that interpretation then one can indeed still have more double linebreaks in part 2;
-	//   - but `torchwood.ParseCheckpoint` *does* reject a checkpoint as malformed if it contains double linebreaks in the trailer.
-	// We're going with the torchwood interpretation, here; the alternative is unworkable
-	// if one wants to have a format that both keeps concatenating to the end and also refuses to use any other bounding
-	// such as either opening and closing delimiters for sections or length prefixes.)
+	// (Looking yet deeper, to verify that that delimiter is actually true and cannot be present in a valid body:
+	// It's touchy.
+	// Technically, part 2 is specified as allowing unknown trailing content,
+	// and in fact some implementations *do* permit the double-linebreak value in that section!
+	// (The `torchwood` module's `ParseCheckpoint` rejects it; but `sumdb/tlog`'s `ParseTree` allows it.)
+	// However, the parser for part 3 -- `sumdb/note.Open` -- both skips over arbitrary body to find the last double-linebreak...
+	// but then *also* scans backwards over the body to ensure it doesn't contain another instance of that.
+	// Thus, the parse for part 3 does forbid a variable number of double linebreaks,
+	// leaving the permissiveness of some part 2 implementations as irrelevant.
+	// Got a headache yet?  I know I do.
+	// Composing a series of formats that lack distinctive opening and closing delimiters gets confusing, mkay?)
 	panic("nyi")
 }
