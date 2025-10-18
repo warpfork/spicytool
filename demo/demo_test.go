@@ -197,6 +197,10 @@ func Test_Hello(*testing.T) {
 	// it also contains a magic prefix which marks it as a leaf node in the merkle tree,
 	// as per https://tools.ietf.org/html/rfc6962#section-2.1.
 	recordHash := tlog.RecordHash(entries[targetIndex])
+	slog.Info("Entry to verify",
+		"body", entries[targetIndex],
+		"recordHash", recordHash,
+	)
 
 	// Verify the proof, again using the tlog library to do the heavy lifting.
 	// Note that the parameters, beyond the proof itself and the record hash and index, all come from the checkpoint data.
