@@ -32,11 +32,6 @@ type SpicySigV1 struct {
 	contextHint string
 }
 
-// Hey, you: looking for the marshal function for SpicySigV1?
-// There isn't one!  See "../signing/marshal.go" for the nearest thing.
-// (Neither of the two forms of partially-parsed checkpoint here are serializable again,
-// so this type has turned out unsuitable for having a marshal method.)
-
 func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	// A spicysig comes in roughly three or four sections:
 	//   1. the header + index + mip.

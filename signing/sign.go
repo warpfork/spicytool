@@ -44,7 +44,7 @@ func (lop *LogOperator) Sign(ctx context.Context, body io.Reader, contextHint st
 	// This just came from... ourselves... so doing asymmetric crypto on it seems rather silly.
 	// (Arguably, this could also be implemented by searching for double-linebreaks in the body, but...
 	// see comments in spicy/parse.go for how much a specification/implementation conflict-hole that is already; I'd rather not engage it further.)
-	n, err := note.Open(checkpointRaw, nil)
+	checkpointNote, err := note.Open(checkpointRaw, nil)
 	slog.Debug("Checkpoint raw:",
 		"body", checkpointRaw,
 		"laments", err,
@@ -53,10 +53,10 @@ func (lop *LogOperator) Sign(ctx context.Context, body io.Reader, contextHint st
 	if err != nil && !errors.As(err, &uff) {
 		return nil, err
 	}
-	n = uff.Note
+	checkpointNote = uff.Note
 
 	// Now parse the actual checkpoint into usable data.
-	checkpoint, err := torchwood.ParseCheckpoint(n.Text)
+	checkpoint, err := torchwood.ParseCheckpoint(checkpointNote.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (lop *LogOperator) Sign(ctx context.Context, body io.Reader, contextHint st
 	return marshalSpicySig(
 		index.Index,
 		mip,
-		checkpointRaw,
+		checkpointNote,
 		contextHint,
 	), nil
 }

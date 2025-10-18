@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"golang.org/x/mod/sumdb/note"
 	"golang.org/x/mod/sumdb/tlog"
 )
 
@@ -11,17 +12,13 @@ type Result []byte
 
 // marshalSpicySig marshals a spicysig together from compoments into a byte slice.
 //
-// This function signature is a little strange because it takes a checkpoint as already-serialized bytes,
-// assumes that's been done correctly, and just bangs it in.
-// I'd like this to be a little better-typed and a little harder to misuse,
-// but our underlying libraries are strangely committed to only exposing
-// either {raw serialized bytes} or {parsed and verified things that can't be reserialized},
-// which... leaves us... well, here.
-// I'm not making this function exported because it's far too easy to misuse.
+// The checkpointNote parameter is assumed to contain a correctly formatted checkpoint as a body.
+// However, we currently have no type that clarifies that,
+// so until that's addressed, this function is unexported, as that gap leaves it too easy to misuse.
 func marshalSpicySig(
 	index uint64,
 	mip tlog.RecordProof,
-	checkpointRaw []byte,
+	checkpointNote *note.Note,
 	contextHint string,
 ) Result {
 	buf := bytes.NewBuffer(nil)
@@ -33,6 +30,10 @@ func marshalSpicySig(
 	}
 	buf.WriteByte('\n')
 
+	checkpointRaw, err := note.Sign(checkpointNote)
+	if err != nil {
+		panic(err)
+	}
 	buf.Write(checkpointRaw)
 
 	if contextHint != "" {
