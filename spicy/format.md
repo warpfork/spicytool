@@ -114,3 +114,8 @@ A context hint is freeform text.
 The entire trailer of the file subsequent to the line containing the "contexthint" keyword is considered to be the context hint.
 
 TODO: specify and document the exact munge that compiles the content and context hint into an entry.
+
+### errata
+
+Parser implementors may wish to note that the number of entries in the MIP section may be zero.
+This is rare, but true for the very first entry in a log!

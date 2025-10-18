@@ -26,10 +26,9 @@ func TestMakeSpicySig(t *testing.T) {
 	// TODO sensible tempdir creation please
 	qt.Assert(t, qt.IsNil(os.RemoveAll(logPath)))
 
+	// Set up a log.
 	signer, err := note.NewSigner(dummyPrivateKey)
 	qt.Assert(t, qt.IsNil(err))
-
-	// Set up a log.
 	lop, err := OperateLog(
 		context.Background(),
 		logPath,
@@ -39,31 +38,57 @@ func TestMakeSpicySig(t *testing.T) {
 	)
 	qt.Assert(t, qt.IsNil(err))
 
-	// Use the log to sign.
-	sigRaw, err := lop.Sign(
-		context.Background(),
-		strings.NewReader("hayo"),
-		"",
-	)
-	qt.Assert(t, qt.IsNil(err))
-
-	// ... Funny thing, let's do it twice.  Reasons.  Shh.
-	// (There's a bug in the parser for the very first entry, lol.)
-	sigRaw, err = lop.Sign(
-		context.Background(),
-		strings.NewReader("hayo"),
-		"",
-	)
-	qt.Assert(t, qt.IsNil(err))
-
-	// For your eyeballing pleasure:
-	t.Logf(">>>%v<<<", string(sigRaw))
-
-	// Can we parse and verify it?
+	// Parse the pubkey we'll use during verify checks.
 	verifier, err := note.NewVerifier(dummyPublicKey)
 	qt.Assert(t, qt.IsNil(err))
-	sig, err := spicy.ParseSpicySig(sigRaw, note.VerifierList(verifier))
-	qt.Assert(t, qt.IsNil(err))
-	err = sig.Verify(strings.NewReader("hayo"), "")
-	qt.Assert(t, qt.IsNil(err))
+
+	t.Run("entry 1", func(t *testing.T) {
+		fixtureBody, fixtureContextHint := "hayo", ""
+
+		// Use the log to sign.
+		sigRaw, err := lop.Sign(
+			context.Background(),
+			strings.NewReader(fixtureBody),
+			fixtureContextHint,
+		)
+		qt.Assert(t, qt.IsNil(err))
+
+		// For your eyeballing pleasure:
+		t.Logf(">>>%v<<<", string(sigRaw))
+
+		t.Run("result verifies", func(t *testing.T) {
+			sig, err := spicy.ParseSpicySig(sigRaw, note.VerifierList(verifier))
+			qt.Assert(t, qt.IsNil(err))
+			err = sig.Verify(
+				strings.NewReader(fixtureBody),
+				fixtureContextHint,
+			)
+			qt.Assert(t, qt.IsNil(err))
+		})
+
+		t.Run("entry 2", func(t *testing.T) {
+			fixtureBody, fixtureContextHint := "heckie", ""
+
+			// Use the log to sign.
+			sigRaw, err := lop.Sign(
+				context.Background(),
+				strings.NewReader(fixtureBody),
+				fixtureContextHint,
+			)
+			qt.Assert(t, qt.IsNil(err))
+
+			// For your eyeballing pleasure:
+			t.Logf(">>>%v<<<", string(sigRaw))
+
+			t.Run("result verifies", func(t *testing.T) {
+				sig, err := spicy.ParseSpicySig(sigRaw, note.VerifierList(verifier))
+				qt.Assert(t, qt.IsNil(err))
+				err = sig.Verify(
+					strings.NewReader(fixtureBody),
+					fixtureContextHint,
+				)
+				qt.Assert(t, qt.IsNil(err))
+			})
+		})
+	})
 }

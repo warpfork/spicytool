@@ -111,7 +111,7 @@ func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	// Part 1: header and index and MIP.
 	// (We've already checked the header line, so can skip over that.)
 	lines := bytes.Split(raw[0:part2edge], []byte{'\n'})
-	if len(lines) < 3 {
+	if len(lines) < 2 {
 		return nil, errors.New("malformed spicysig -- too short")
 	}
 	rest, matches := munchPrefix(lines[1], []byte("index "))
