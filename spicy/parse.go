@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"filippo.io/torchwood"
 	"golang.org/x/mod/sumdb/note"
 	"golang.org/x/mod/sumdb/tlog"
 )
@@ -20,7 +21,8 @@ type SpicySigV1 struct {
 	entryIndex int64
 	mip        tlog.RecordProof
 
-	checkpointNote note.Note
+	checkpointNote note.Note // here you can see the sigs used; body is parsed in checkpint field.
+	checkpoint     torchwood.Checkpoint
 
 	contextHint string
 }
@@ -143,6 +145,10 @@ func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	if err != nil {
 		return nil, err
 	}
+	checkpoint, err := torchwood.ParseCheckpoint(checkpointNote.Text)
+	if err != nil {
+		return nil, err
+	}
 
 	// Part 4:
 	// A contexthint is optional.  But is the only remaining possible section we accept.
@@ -159,6 +165,7 @@ func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 		entryIndex:     entryIndex,
 		mip:            mip,
 		checkpointNote: *checkpointNote,
+		checkpoint:     checkpoint,
 		contextHint:    contextHint,
 	}, nil
 }
