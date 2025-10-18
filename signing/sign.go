@@ -1,10 +1,8 @@
 package signing
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 
@@ -15,8 +13,6 @@ import (
 	"golang.org/x/mod/sumdb/note"
 	"golang.org/x/mod/sumdb/tlog"
 )
-
-type Result []byte
 
 func (lop *LogOperator) Sign(ctx context.Context, body io.Reader, contextHint string) (Result, error) {
 	// Phase 1: compute our entry, and append it to the log.
@@ -78,22 +74,10 @@ func (lop *LogOperator) Sign(ctx context.Context, body io.Reader, contextHint st
 	)
 
 	// And emit.
-	// TODO: extract to function.
-	buf := bytes.NewBuffer(nil)
-	buf.WriteString("c2sp.org/spicy-signature@v1\n")
-	fmt.Fprintf(buf, "index %d\n", index.Index)
-	for _, h := range mip {
-		buf.WriteString(h.String())
-		buf.WriteByte('\n')
-	}
-	buf.WriteByte('\n')
-
-	buf.Write(checkpointRaw)
-
-	if contextHint != "" {
-		buf.WriteString("\ncontexthint\n")
-		buf.Write([]byte(contextHint))
-		// REVIEW: exact desired semantics for trailing linebreaks.
-	}
-	return buf.Bytes(), nil
+	return marshalSpicySig(
+		index.Index,
+		mip,
+		checkpointRaw,
+		contextHint,
+	), nil
 }

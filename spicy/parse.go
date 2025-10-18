@@ -17,6 +17,11 @@ const (
 	sectionSep = "\n\n"
 )
 
+// SpicySigV1 represents a parsed spicy sig, ready to be applied to verify some content.
+//
+// The checkpoint's signatures have been verified by the end of `ParseSpicySig`,
+// but checking that the MIP relates those signatures to some subject material
+// must still be checked by calling `Verify` upon the subject matieral.
 type SpicySigV1 struct {
 	entryIndex int64
 	mip        tlog.RecordProof
@@ -27,12 +32,10 @@ type SpicySigV1 struct {
 	contextHint string
 }
 
-func (s *SpicySigV1) Format() []byte {
-	// ... it has just come to my attention that `note.Note` also cannot be created except by emitting one and parsing it again,
-	// so, that's neat.
-	// What, exactly, is supposed to be a sane type to use to compose in our SpicySig struct here?
-	panic("nyi")
-}
+// Hey, you: looking for the marshal function for SpicySigV1?
+// There isn't one!  See "../signing/marshal.go" for the nearest thing.
+// (Neither of the two forms of partially-parsed checkpoint here are serializable again,
+// so this type has turned out unsuitable for having a marshal method.)
 
 func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	// A spicysig comes in roughly three or four sections:
