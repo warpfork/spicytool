@@ -89,6 +89,31 @@ func TestMakeSpicySig(t *testing.T) {
 				)
 				qt.Assert(t, qt.IsNil(err))
 			})
+
+			t.Run("entry 3 with context hint", func(t *testing.T) {
+				fixtureBody, fixtureContextHint := "gosh", "dang"
+
+				// Use the log to sign.
+				sigRaw, err := lop.Sign(
+					context.Background(),
+					strings.NewReader(fixtureBody),
+					fixtureContextHint,
+				)
+				qt.Assert(t, qt.IsNil(err))
+
+				// For your eyeballing pleasure:
+				t.Logf(">>>%v<<<", string(sigRaw))
+
+				t.Run("result verifies", func(t *testing.T) {
+					sig, err := spicy.ParseSpicySig(sigRaw, note.VerifierList(verifier))
+					qt.Assert(t, qt.IsNil(err))
+					err = sig.Verify(
+						strings.NewReader(fixtureBody),
+						fixtureContextHint,
+					)
+					qt.Assert(t, qt.IsNil(err))
+				})
+			})
 		})
 	})
 }

@@ -1,7 +1,12 @@
 package spicy
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"errors"
 	"io"
+	"math"
 
 	"golang.org/x/mod/sumdb/tlog"
 )
@@ -39,10 +44,20 @@ func RecordForBody(body io.Reader, contextHint string) ([]byte, error) {
 		}
 		return b, nil
 	} else {
-		panic("nyi")
-		// TODO: roughly `h("b" || len(body) || body || "c" || len(contexthint) || contexthint)`.
-		// TODO: design how the lengths are encoded therein.
-		// TODO: consider also doing an `h(body)` instead of using it directly... if only because `tlog.RecordHash` takes bytes and not a reader.
-		// REVIEW: do we want a more humanely legible entry format than this?  One might argue that a purpose of a transparency log is to have entries that can be reasonably examined.
+		// Produce `"b" || h(body) || "c" || len(contexthint) || contexthint`.
+		if len(contextHint) > math.MaxUint16 {
+			return nil, errors.New("contexthint too long")
+		}
+		h := sha256.New()
+		if _, err := io.Copy(h, body); err != nil {
+			return nil, err
+		}
+		var record bytes.Buffer
+		record.WriteByte('b')
+		record.Write(h.Sum(nil))
+		record.WriteByte('c')
+		binary.Write(&record, binary.LittleEndian, uint16(len(contextHint)))
+		record.WriteString(contextHint)
+		return record.Bytes(), nil
 	}
 }
