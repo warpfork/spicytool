@@ -12,7 +12,10 @@ import (
 )
 
 func (sig *SpicySigV1) Verify(body io.Reader, contextHint string) error {
-	record, err := RecordForBody(body, contextHint)
+	if contextHint != "" && sig.contextHint != contextHint {
+		return errors.New("contexthint expectation does not match attached contexthint")
+	}
+	record, err := RecordForBody(body, sig.contextHint)
 	if err != nil {
 		return err
 	}
