@@ -4,10 +4,23 @@ The Spicy Signature Format
 (This is a provisional draft: a more formal specification can be
 expected to appear later at https://c2sp.org/ .)
 
-Spicy Signatures compose information about a transparency log,
-a checkpoint of a tree state of that log,
-a collection of witness signatures over that checkpoint,
-and a MIP (Merkle Inclusion Proof) of some entry's presence in the log.
+Spicy Signatures are a textual format containing
+an offline-verifiable proof that some data has been logged to a transparency log
+and that its inclusion has been observed by some number of witnesses.
+
+More specifically, a Spicy Signature composes the following information
+which is derived from an entry and its presence in a transparency log:
+
+- a checkpoint of a tree state of that log,
+- a collection of witness signatures over that checkpoint,
+- and a MIP (Merkle Inclusion Proof) of some entry's presence in the log.
+
+See the "Considerations" section, below,
+for more information about ways to apply Spicy Signatures in various situations.
+
+
+Format
+------
 
 Roughly:
 
@@ -30,9 +43,6 @@ index {entryIndex:b10int}
 contexthint
 {arbitrary:string}
 ```
-
-(Yes, the log name is generally seen appearing twice: this is because a log signs itself as a witness of itself.
-However, that signature should not be considered privileged or special compared to other witness signatures.)
 
 A slightly more literal example (although still with elisions for human reading) would be:
 
@@ -119,3 +129,43 @@ TODO: specify and document the exact munge that compiles the content and context
 
 Parser implementors may wish to note that the number of entries in the MIP section may be zero.
 This is rare, but true for the very first entry in a log!
+
+In the examples above, the reader may note that the log name is seen appearing twice in the same document:
+this is not a typo;
+it is because a log signs itself as a witness of itself.
+However, that signature should not be considered privileged or special compared to other witness signatures.
+It is also not required; it is just common to include
+because it is operationally easy to do so.
+
+
+
+Considerations
+--------------
+
+### Considerations for Usage
+
+An expected use of Spicy Signatures is to use their publication to
+make it publicly undeniable that the signature was issued.
+Distributing a Spicy Signature along with some data is a way to
+provide a consumer of that data with confidence that the data
+they are given is the same data everyone else is being given...
+and if that is untrue, they will at least be able to prove that.
+
+Spicy Signatures are a general transparency system primitive.
+They are not specific to a realm of application (e.g. Key Transparency, Certificate Transparency, Binary Transparency, etc).
+Applying Spicy Signatures to specific domains generally involves
+making a structured entry format which suits the domain,
+and applying the spicy signature over that.
+
+The entries that a Spicy Signature attests to may have any form,
+so long as that entry is also accepted by the underlying transparency log.
+(Generally this means entries must be of limited size; and typically,
+hashes of content are used as a means to describe arbitrary data within a limited entry size.)
+In many cases, it is sufficient to regenerate those entries from
+data as it is already distributed in that domain (and so no additional
+storage is required to attain useful properties);
+in other cases, unlocking value in a domain may require more than
+only undeniable claim issuance (for example, it may also require
+providing additional related information that a monitoring system requires),
+and that may require an additional out-of-band mechanism for distributing
+that additional information.
