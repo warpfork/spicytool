@@ -10,7 +10,7 @@ import (
 
 type Result []byte
 
-// marshalSpicySig marshals a spicysig together from compoments into a byte slice.
+// marshalSpicySig marshals a spicysig together from components into a byte slice.
 //
 // The checkpointNote parameter is assumed to contain a correctly formatted checkpoint as a body.
 // However, we currently have no type that clarifies that,

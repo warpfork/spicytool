@@ -21,12 +21,12 @@ const (
 //
 // The checkpoint's signatures have been verified by the end of `ParseSpicySig`,
 // but checking that the MIP relates those signatures to some subject material
-// must still be checked by calling `Verify` upon the subject matieral.
+// must still be checked by calling `Verify` upon the subject material.
 type SpicySigV1 struct {
 	entryIndex int64
 	mip        tlog.RecordProof
 
-	checkpointNote note.Note // here you can see the sigs used; body is parsed in checkpint field.
+	checkpointNote note.Note // here you can see the sigs used; body is parsed in checkpoint field.
 	checkpoint     torchwood.Checkpoint
 
 	contextHint string
@@ -61,7 +61,7 @@ func ParseSpicySig(raw []byte, verifiers note.Verifiers) (*SpicySigV1, error) {
 	// ... Sort of.
 	// In fact, whether this is unambiguously parsable at all somewhat depends on who you ask.
 	// There is variation amongst implementations of parsers for part 2.
-	//   - `sumdb/note.Open` defines the signature section as the *last* occurence of "\n\n",
+	//   - `sumdb/note.Open` defines the signature section as the *last* occurrence of "\n\n",
 	//     which means that part 3's parse does not forbid that sequence in the section occupied by part 2;
 	//   - `sumdb/tlog.ParseTree` very explicitly ignores *all* trailing content, regardless of content,
 	//     so by that interpretation then one can indeed still have more double linebreaks in part 2;
