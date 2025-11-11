@@ -59,7 +59,7 @@ func RecordForBody(body io.Reader, contextHint string) ([]byte, error) {
 		record.WriteByte('b')
 		record.Write(h.Sum(nil))
 		record.WriteByte('c')
-		binary.Write(&record, binary.LittleEndian, uint16(len(contextHint)))
+		binary.Write(&record, binary.BigEndian, uint16(len(contextHint)))
 		record.WriteString(contextHint)
 		return record.Bytes(), nil
 	}
