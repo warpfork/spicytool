@@ -169,3 +169,14 @@ only undeniable claim issuance (for example, it may also require
 providing additional related information that a monitoring system requires),
 and that may require an additional out-of-band mechanism for distributing
 that additional information.
+
+The value of publicly staked claims is only as high as the
+energy invested in monitoring the claims.
+Spicy Signatures do not provide a description of how monitoring
+should be applied to a transparency log.
+A transparency log only provides the public claim staking,
+and a Spicy Signature only provides a mechanism to that lets a
+consumer of the Spicy Signature verify that that claim has been seen by several witnesses.
+In general, some monitoring of the log entries and some efforts to ensure
+that the entries obey some semantic rules that the log means to imply about
+its entries is also needed to provide value.
