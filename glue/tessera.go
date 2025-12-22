@@ -10,7 +10,7 @@ import (
 	"golang.org/x/mod/sumdb/tlog"
 )
 
-var _ torchwood.TileReaderWithContext = (*tesseraTileReader)(nil)
+var _ torchwood.TileReader = (*tesseraTileReader)(nil)
 
 // tesseraTileReader implements torchwood.TileReaderWithContext
 type tesseraTileReader struct {
@@ -22,7 +22,7 @@ type tesseraTileReader struct {
 //
 // For other many situations, consider using [torchwood.TileFetcher]
 // (which operates over http).
-func NewTesseraTileReader(tesseraReader tessera.LogReader) torchwood.TileReaderWithContext {
+func NewTesseraTileReader(tesseraReader tessera.LogReader) torchwood.TileReader {
 	return &tesseraTileReader{tesseraReader}
 }
 
@@ -51,4 +51,11 @@ func (tr *tesseraTileReader) ReadTiles(ctx context.Context, tiles []tlog.Tile) (
 // SaveTiles is required to implement torchwood.TileReaderWithContext (but does nothing in this implementation).
 func (tr *tesseraTileReader) SaveTiles(tiles []tlog.Tile, data [][]byte) {
 	// No-op.
+}
+
+func (tr *tesseraTileReader) ReadEndpoint(ctx context.Context, path string) (data []byte, err error) {
+	// Upstream has introduced this method as a catch-all for other operations relating to a log.
+	// We don't use this yet, but, could.
+	// (Currently, we just used the Tessera checkpoint API directly elsewhere where relevant.)
+	panic("unneeded")
 }

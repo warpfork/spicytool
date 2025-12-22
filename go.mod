@@ -3,7 +3,7 @@ module github.com/warpfork/spicytool
 go 1.25
 
 require (
-	filippo.io/torchwood v0.5.1-0.20250930130350-15c8e8b7946e
+	filippo.io/torchwood v0.8.0
 	github.com/go-quicktest/qt v1.101.0
 	github.com/transparency-dev/tessera v1.0.0
 	golang.org/x/mod v0.29.0
@@ -24,8 +24,8 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 )
