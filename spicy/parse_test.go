@@ -12,7 +12,7 @@ const (
 	dummyPublicKey = "example.com/log/testdata+33d7b496+AeHTu4Q3hEIMHNqc6fASMsq3rKNx280NI+oO5xCFkkSx"
 )
 
-const spicy1 = `c2sp.org/spicy-signature@v1
+const spicy1 = `c2sp.org/tlog-proof@v1
 index 100252
 +4IF875THRSj6IOZo2SRpgL6buVI/cawB2iLGFLgWDQ=
 nBeqO1BayYMNXX05jMGGtCfprprlSVASVTUUwA0OC9E=
@@ -63,4 +63,9 @@ func TestParseSpicySig(t *testing.T) {
 		qt.Check(t, qt.Equals(base64.StdEncoding.EncodeToString([]byte(s.mip[11][:])), "8SliMOQ4QRiNiRzAt4iEDvrOC0ETwRssbnOdutGqPhA="))
 		qt.Check(t, qt.Equals(s.contextHint, "hello there\n"))
 	})
+}
+
+func TestTorchwoodParseSpicySig(t *testing.T) {
+	// There is no such test, because torchwood exposes no such feature.
+	// Torchwood combines parse and verify and does not let the library user perform a parse alone.
 }

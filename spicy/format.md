@@ -25,7 +25,7 @@ Format
 Roughly:
 
 ```
-c2sp.org/spicy-signature@v1
+c2sp.org/tlog-proof@v1
 index {entryIndex:b10int}
 {MIPhash1:b64string}
 {MIPhash2:b64string}

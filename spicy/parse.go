@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	preambleV1 = "c2sp.org/spicy-signature@v1\n"
+	preambleV1 = "c2sp.org/tlog-proof@v1\n"
 	sectionSep = "\n\n"
 )
 

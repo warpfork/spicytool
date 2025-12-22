@@ -22,7 +22,7 @@ func marshalSpicySig(
 	contextHint string,
 ) Result {
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString("c2sp.org/spicy-signature@v1\n")
+	buf.WriteString("c2sp.org/tlog-proof@v1\n")
 	fmt.Fprintf(buf, "index %d\n", index)
 	for _, h := range mip {
 		buf.WriteString(h.String())
