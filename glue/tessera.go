@@ -32,9 +32,9 @@ func NewTesseraTileReader(tesseraReader tessera.LogReader) torchwood.TileReaderW
 func (tr *tesseraTileReader) ReadTiles(ctx context.Context, tiles []tlog.Tile) ([][]byte, error) {
 	data := make([][]byte, len(tiles))
 	for i, tile := range tiles {
-		// TODO:REVIEW: this bit of bodging appears to be operationally correct but I'm not confident it's exactly correct or unfragile.
-		// Everyone seems to tacitly agree that "H = 8" right now, and tessera doesn't even appear to have a parameter for that, but I don't know what breaks if that changes.
-		// Is there some existing home of a better form of this code?  It feels weird that something this fiddly wouldn't already be exported somewhere.
+		// Note that while the `tlog.Tile` values contain an `H` parameter, it's not used, and that's intentional.
+		// Since that package was written, everyone has agreed that "H = 8" is a reasonable value to standardize on:
+		// C2SP specs now state this value, and accordingly, Tessera doesn't even support a parameterization there.
 		level := uint64(tile.L)
 		index := uint64(tile.N)
 		partial := uint8(tile.W)
