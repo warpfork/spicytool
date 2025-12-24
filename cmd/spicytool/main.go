@@ -22,9 +22,9 @@ func main() {
 	case "sign":
 		sign(os.Args[2:])
 	case "verify":
-		// return verify(os.Args[2:])
+		verify(os.Args[2:])
 	case "keygen":
-		// return keygen(os.Args[2:])
+		keygen(os.Args[2:])
 	case "help", "-h", "--help":
 		printUsage()
 		os.Exit(0)
@@ -53,15 +53,14 @@ Sign options:
 
 	fmt.Fprint(os.Stderr, `
 Verify options:
-  (TODO)
 `)
-	// verifyFlags.PrintDefaults()
+	verifyFlags.PrintDefaults()
 
 	fmt.Fprint(os.Stderr, `
 Keygen options:
-  (TODO)
+  <origin-name>
+        positional argument: the name to use in the key
 `)
-	// keygenFlags.PrintDefaults()
 
 	fmt.Fprint(os.Stderr, `
 Examples:

@@ -39,13 +39,25 @@ func sign(args []string) {
 		fmt.Fprintf(os.Stderr, "Usage error: LOG_KEY env var must be provided and contain a private key for signing tlog checkpoints\n")
 		os.Exit(exitFlagMisuse)
 	}
+	witnessPolicyBytes := defaultWitnessPolicy
+	if path := os.Getenv("LOG_WITNESS_POLICY"); path != "" {
+		var err error
+		witnessPolicyBytes, err = os.ReadFile(path)
+		if err != nil {
+			log.Fatalln("failed to read witness policy file:", err)
+		}
+	}
 
 	// Tlog setup.
 	ctx := context.Background()
+	witnessGroup, err := tessera.NewWitnessGroupFromPolicy(witnessPolicyBytes)
+	if err != nil {
+		log.Fatalln("failed to create witness group from policy:", err)
+	}
 	lh, err := spicytool.OperateLog(ctx,
 		*logPath,
 		os.Getenv("LOG_KEY"),
-		tessera.NewWitnessGroup(0)) // TODO replace with more energetic defaults
+		witnessGroup)
 	if err != nil {
 		log.Fatalln("failed to open log for appending:", err)
 	}
@@ -62,23 +74,7 @@ func sign(args []string) {
 	}
 
 	// Compute our entry.
-	subject := os.Stdin
-	if *filename != "-" {
-		subject, err = os.Open(*filename)
-		if err != nil {
-			log.Fatalln("could not open file:", err)
-		}
-	}
-	var hintActual string
-	if hint == nil || *hint == "" {
-		hintActual = *filename
-	} else {
-		hintActual = *hint
-	}
-	entry, err := contexts.RecordForBody(subject, hintActual)
-	if err != nil {
-		log.Fatalln("error while streaming the subject:", err)
-	}
+	entry, hint := computeEntry(*filename, *hint)
 
 	// Append log.
 	idx, err := lh.AppendAndAwait(ctx, entry)
@@ -94,10 +90,32 @@ func sign(args []string) {
 
 	// Emit spicysig.
 	var spicybytes []byte
-	if hintActual != "" {
-		spicybytes = torchwood.FormatProofWithExtraData(int64(idx), []byte(hintActual), recordProof, checkpointRaw)
+	if hint != "" {
+		spicybytes = torchwood.FormatProofWithExtraData(int64(idx), []byte(hint), recordProof, checkpointRaw)
 	} else {
 		spicybytes = torchwood.FormatProof(int64(idx), recordProof, checkpointRaw)
 	}
 	output.Write(spicybytes)
+}
+
+// This is still a CLI-adjacent function:
+// it may exit;
+// and it has some special values of the arguments: if filename is "-", it uses stdin.
+func computeEntry(filename string, hint string) (entry []byte, hintUsed string) {
+	var err error
+	subject := os.Stdin
+	if filename != "-" {
+		subject, err = os.Open(filename)
+		if err != nil {
+			log.Fatalln("could not open file:", err)
+		}
+	}
+	if hint == "" {
+		hint = filename
+	}
+	entry, err = contexts.RecordForBody(subject, hint)
+	if err != nil {
+		log.Fatalln("error while streaming the subject:", err)
+	}
+	return entry, hint
 }
